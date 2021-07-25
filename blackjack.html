@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="favicon.png">
+    <title>Blackjack</title>
+    <link href="style.css" rel="stylesheet" type="text/css" />
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+  </head>
+  <script src="script.js"></script>
+  <script>
+    function shuffle(array, seed = 1) {
+      let currentIndex = array.length
+      let temporaryValue, randomIndex
+
+      let random = () => {
+        var x = Math.sin(seed++) * 10000
+        return x - Math.floor(x)
+      }
+
+      while (0 !== currentIndex) {
+          randomIndex = Math.floor(random() * currentIndex)
+          currentIndex -= 1
+          temporaryValue = array[currentIndex]
+          array[currentIndex] = array[randomIndex]
+          array[randomIndex] = temporaryValue
+      }
+
+      return array
+    }
+
+    // The code below runs when the page is loaded
+    window.addEventListener('load', function () {
+      // Deck
+      const deck = new Deck()
+      deck.shuffle()
+
+      // Global variables
+      let playerPoints
+      let compPoints
+      let turn = "player"
+      const gameOver = document.querySelector('#status-p')
+
+      // Player's starting cards
+      let playersCards = [deck.draw(), deck.draw()]
+      dealCard(playersCards)
+
+      // Hit event listener
+      const hitButton = document.querySelector('#hit-button')
+      hitButton.addEventListener('click', hit)
+
+      // Player hits
+      function hit() {
+        deck.shuffle()
+        playersCards.unshift(deck.draw())
+        dealCard(playersCards)
+      }
+
+      // Stick event listener
+      const stickButton = document.querySelector('#stick-button')
+      stickButton.addEventListener('click', stick)
+
+      // Player sticks
+      function stick() {
+        setTimeout(function() { compHand() }, 500)
+      }
+
+      // Keydown listener
+      document.addEventListener('keydown', function (event) {
+        if (event.key === 'h') hit()
+        if (event.key === 's') stick()
+      });
+      
+      // Card dealt
+      function dealCard(cards, user) {
+        playerPoints = 0
+        let hand = new Hand(cards)
+        const divElement = document.querySelector('#div-1-2')
+        const pointsElement = document.querySelector('#players-points')
+        divElement.innerHTML = ''
+        cards.forEach(card => {
+          const cardImage = document.createElement('img')
+          cardImage.src = `https://deckofcardsapi.com/static/img/${card.toApi()}.png`
+          cardImage.height = 200
+          cardImage.style.margin = '0px 8px 0px 0px'
+          divElement.appendChild(cardImage)
+        })
+        playerPoints += hand.points
+        const pointsColor = playerPoints <= 21 ? 'green' : 'rgb(186,38,50)'
+        pointsElement.innerHTML = `<b>Your hand:</b></br><span style="color:${pointsColor};">${playerPoints} points</span>`
+        busted(hand)
+      }
+
+      // Check if player busts
+      function busted(hand) {
+        const busted = hand.points > 21 ? true : false
+        if (busted) {
+          hitButton.removeEventListener('click', hit)
+          setTimeout(function() { compHand() }, 500)
+        }
+      }
+
+      // Comp's hand
+      function compHand() {
+        compPoints = 0
+        let compCards = [deck.draw(), deck.draw()]
+        let hand = new Hand(compCards)
+
+        while (hand.points < 16) {
+          compCards.push(deck.draw())
+          hand = new Hand(compCards)
+        }
+
+        const pointsElement = document.querySelector('#comp-points')
+        const pointsColor = hand.points <= 21 ? 'green' : 'rgb(186,38,50)'
+        pointsElement.innerHTML = `<b>Dealer's hand:</b></br><span style="color:${pointsColor};">${hand.points} points</span>`
+        compPoints = hand.points
+        winner()
+      }
+
+      // Game over messages
+      function winMessage() {
+        gameOver.style.color = 'green'
+        gameOver.innerHTML = 'You win!'
+      }
+
+      function loseMessage() {
+        gameOver.style.color = 'rgb(186,38,50)'
+        gameOver.innerHTML = 'You lose!'
+      }
+
+      function drawMessage() {
+        gameOver.style.color = 'grey'
+        gameOver.innerHTML = 'Draw!'
+      }
+
+      // Handle cases
+      function winner() {
+        const statusDiv = document.querySelector('#div-2')
+
+        switch (true) {
+          case (playerPoints <= 21 && compPoints <= 21 && playerPoints > compPoints):
+            winMessage()
+            break
+          case (playerPoints <= 21 && compPoints <= 21 && playerPoints < compPoints):
+            loseMessage()
+            break
+          case (playerPoints == compPoints):
+            drawMessage()
+            break
+          case (playerPoints <= 21 && compPoints > 21):
+            winMessage()
+            break
+          case (playerPoints > 21 && compPoints <= 21):
+            loseMessage()
+            break
+          case (playerPoints > 21 && compPoints > 21 && playerPoints > compPoints):
+            loseMessage()
+            break
+          case (playerPoints > 21 && compPoints > 21 && playerPoints < compPoints):
+            winMessage()
+            break
+        }
+
+        statusDiv.appendChild(gameOver)
+      }
+    })
+  </script>
+  <body>
+    <main>
+      <div id="div-1">
+        <!-- Player's points -->
+        <div id="div-1-1">
+          <p id="players-points" class="points-p"><b>Your points:</b></br>21 points</p>
+        </div>
+
+        <!-- Player's hand -->
+        <div id="div-1-2">
+          <img src="https://deckofcardsapi.com/static/img/AS.png" style="height: 80%;">
+        </div>
+      </div>
+
+      <!-- Status -->
+      <div id="div-2">
+        <p id="status-p"></p>
+      </div>
+
+      <div id="div-3">
+        <!-- Deck -->
+        <div id="div-3-1">
+          <img id="deck-img" src="deck.png" style="height: 80%;">
+        </div>
+        <!-- Comp's points -->
+        <div id="div-3-2">
+          <p id="comp-points" class="points-p"></p>
+        </div>
+      </div>
+      
+      <!-- Buttons -->
+      <div id="div-4">
+        <button id="hit-button" class="button">HIT</button>
+        <button id="stick-button" class="button">STICK</button>
+      </div>
+    </main>
+  </body>
+</html>
