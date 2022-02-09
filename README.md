@@ -9,4 +9,4 @@ Creating a blackjack game in the browser using HTML, CSS and vanilla JavaScript 
 2. Use VSCode Live Server to launch the application
 
 ## Credits
-Many thanks to Alex Peattie for being my first teacher in web development!
+Many thanks to Alex Peattie for teaching me all about web development!
